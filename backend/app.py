@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file, abort
+from flask import Flask, request, send_file, abort, render_template_string
 from flask_cors import CORS
 import os, shutil, zipfile, tempfile
 from werkzeug.utils import secure_filename
@@ -8,6 +8,67 @@ CORS(app)
 
 UPLOAD_ROOT = "uploads"
 MERGED_ROOT = "merged-dataset"
+
+# Add homepage route
+@app.route("/", methods=["GET"])
+def home():
+    return render_template_string("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>YOLO Models Dataset Merger</title>
+        <style>
+            body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+            .container { background: #f5f5f5; padding: 30px; border-radius: 10px; }
+            h1 { color: #333; text-align: center; }
+            .info { background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            .endpoint { background: #fff; padding: 10px; margin: 10px 0; border-left: 4px solid #2196f3; }
+            code { background: #f0f0f0; padding: 2px 5px; border-radius: 3px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🎯 YOLO Models Dataset Merger App</h1>
+            
+            <div class="info">
+                <h3>✅ App Status: Running Successfully!</h3>
+                <p>Your Flask application is deployed and ready to merge YOLO datasets.</p>
+            </div>
+
+            <h3>📡 Available API Endpoints:</h3>
+            
+            <div class="endpoint">
+                <h4>POST /merge</h4>
+                <p><strong>Purpose:</strong> Merge multiple YOLO datasets into one</p>
+                <p><strong>Parameters:</strong></p>
+                <ul>
+                    <li><code>files</code>: List of ZIP files containing YOLO datasets</li>
+                    <li><code>dataset_count</code>: Number of datasets (2-10)</li>
+                </ul>
+                <p><strong>Returns:</strong> ZIP file with merged dataset</p>
+            </div>
+
+            <h3>🚀 How to Use:</h3>
+            <p>Send a POST request to <code>/merge</code> with your YOLO dataset ZIP files.</p>
+            <p>The app will automatically relabel classes and create a merged dataset with proper YOLO format.</p>
+
+            <h3>📁 Expected Dataset Structure:</h3>
+            <pre>
+dataset.zip
+├── train/
+│   ├── images/
+│   └── labels/
+├── valid/
+│   ├── images/
+│   └── labels/
+└── test/
+    ├── images/
+    └── labels/
+            </pre>
+        </div>
+    </body>
+    </html>
+    """)
 
 @app.route("/merge", methods=["POST"])
 def merge():
