@@ -5,6 +5,9 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app)
+@app.route("/")
+def home():
+    return "YOLO Dataset Merger API is running!"
 
 UPLOAD_ROOT = "uploads"
 MERGED_ROOT = "merged-dataset"
