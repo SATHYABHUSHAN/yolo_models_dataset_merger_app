@@ -2,7 +2,7 @@ services:
   - type: web
     name: dataset-merger-app
     env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python app.py"
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "python backend/app.py"
     plan: free
     autoDeploy: true
