@@ -1,6 +1,6 @@
 from flask import Flask, request, send_file, abort, render_template_string
 from flask_cors import CORS
-import os, shutil, zipfile, tempfile
+import os, shutil, zipfile
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -27,7 +27,8 @@ def home():
         </style>
     </head>
     <body>
-        <h1>📦 YOLO Dataset Merger</h1>
+        <h1> SAAHAAS <h1>                          
+        <h2> YOLO Dataset Merger</h2>
         <form method="post" action="/merge" enctype="multipart/form-data">
             <label>Number of datasets to merge (2–10):</label>
             <input type="number" name="dataset_count" min="2" max="10" value="2" required>
@@ -113,9 +114,13 @@ def merge():
             f.write(f"train: ./train/images\nval: ./valid/images\ntest: ./test/images\n\n")
             f.write(f"nc: {len(class_names)}\nnames: {class_names}\n")
 
-        # Create ZIP
-        zip_path = os.path.join(tempfile.gettempdir(), "merged_dataset.zip")
+        # ✅ Create ZIP in merged-dataset/
+        zip_path = os.path.join(MERGED_ROOT, "merged_dataset.zip")
         shutil.make_archive(zip_path[:-4], "zip", MERGED_ROOT)
+
+        if not os.path.exists(zip_path):
+            return "Error: Failed to create ZIP.", 500
+
         return send_file(zip_path, as_attachment=True, download_name="merged_yolo_dataset.zip")
 
     except Exception as e:
@@ -128,5 +133,5 @@ def health():
 if __name__ == "__main__":
     os.makedirs(UPLOAD_ROOT, exist_ok=True)
     os.makedirs(MERGED_ROOT, exist_ok=True)
-    port = int(os.environ.get("PORT", 8080))  # For Railway, use their assigned port
+    port = int(os.environ.get("PORT", 8080))  # Railway uses this
     app.run(host="0.0.0.0", port=port, debug=True)
