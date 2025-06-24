@@ -27,7 +27,7 @@ def home():
         </style>
     </head>
     <body>
-        <h1> SAAHAAS <h1>                          
+        <h1> SAAHAAS </h1>                          
         <h2> YOLO Dataset Merger</h2>
         <form method="post" action="/merge" enctype="multipart/form-data">
             <label>Number of datasets to merge (2–10):</label>
@@ -51,7 +51,7 @@ def merge():
         if len(files) != dataset_count:
             return f"Error: Expected {dataset_count} files, got {len(files)}.", 400
 
-        # Reset folders
+        print("Cleaning old directories...")
         if os.path.exists(UPLOAD_ROOT): shutil.rmtree(UPLOAD_ROOT)
         if os.path.exists(MERGED_ROOT): shutil.rmtree(MERGED_ROOT)
         os.makedirs(UPLOAD_ROOT)
@@ -59,6 +59,7 @@ def merge():
 
         dataset_dirs, class_names = [], []
 
+        print("Unzipping files...")
         for i, f in enumerate(files):
             filename = secure_filename(f.filename)
             if not filename.endswith(".zip"):
@@ -74,6 +75,7 @@ def merge():
             dataset_dirs.append(extract_dir)
             class_names.append(os.path.splitext(filename)[0].replace("_", " ").title())
 
+        print("Relabeling labels...")
         for cid, ddir in enumerate(dataset_dirs):
             for split in ["train", "valid", "test"]:
                 lbl_dir = os.path.join(ddir, split, "labels")
@@ -89,6 +91,7 @@ def merge():
                                 parts[0] = str(cid)
                                 f.write(" ".join(parts) + "\n")
 
+        print("Copying files to merged-dataset directory...")
         for split in ["train", "valid", "test"]:
             for sub in ["images", "labels"]:
                 os.makedirs(f"{MERGED_ROOT}/{split}/{sub}", exist_ok=True)
@@ -109,21 +112,23 @@ def merge():
                                 count += 1
                             shutil.copy2(src_path, dst_path)
 
-        # Create data.yaml
+        print("Creating data.yaml...")
         with open(os.path.join(MERGED_ROOT, "data.yaml"), "w") as f:
             f.write(f"train: ./train/images\nval: ./valid/images\ntest: ./test/images\n\n")
             f.write(f"nc: {len(class_names)}\nnames: {class_names}\n")
 
-        # ✅ Create ZIP in merged-dataset/
+        print("Creating final ZIP archive...")
         zip_path = os.path.join(MERGED_ROOT, "merged_dataset.zip")
         shutil.make_archive(zip_path[:-4], "zip", MERGED_ROOT)
 
         if not os.path.exists(zip_path):
             return "Error: Failed to create ZIP.", 500
 
+        print("Sending ZIP to user...")
         return send_file(zip_path, as_attachment=True, download_name="merged_yolo_dataset.zip")
 
     except Exception as e:
+        print(f"Exception occurred: {e}")
         return f"Error: {str(e)}", 500
 
 @app.route("/health", methods=["GET"])
@@ -133,5 +138,5 @@ def health():
 if __name__ == "__main__":
     os.makedirs(UPLOAD_ROOT, exist_ok=True)
     os.makedirs(MERGED_ROOT, exist_ok=True)
-    port = int(os.environ.get("PORT", 8080))  # Railway uses this
+    port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)
